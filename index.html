@@ -162,10 +162,12 @@
         </div>
 
     <footer>
-        <p>&copy; 2026 Khamosh_Laffz | Official Platform of K.A. Rathod | All Rights Reserved </p>
+        <p style="font-weight: 600; margin-bottom: 10px;">Is website aur YouTube channel ke malik K.A. Rathod hain.</p>
+        <p style="font-size: 0.8rem; color: #636e72;">&copy; 2026 Khamosh_Laffz | Official Platform of K.A. Rathod | All Rights Reserved </p>
     </footer>
 
     <script>
+        // Aapki nayi API Key jo aapne screenshot me dikhayi thi
         const API_KEY = 'AIzaSyDqbK8AkArxLwUZn_561nTqCHoIYvTaclQ';
         const CHANNEL_ID = 'UCf8x1h6eR6M_o6Y8H9fX9fA';
 
@@ -175,9 +177,12 @@
                 const statsUrl = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${CHANNEL_ID}&key=${API_KEY}`;
                 const sRes = await fetch(statsUrl);
                 const sData = await sRes.json();
-                const s = sData.items[0].statistics;
-                document.getElementById('sub-count').innerText = Number(s.subscriberCount).toLocaleString();
-                document.getElementById('view-count').innerText = Number(s.viewCount).toLocaleString();
+                
+                if (sData.items && sData.items.length > 0) {
+                    const s = sData.items[0].statistics;
+                    document.getElementById('sub-count').innerText = Number(s.subscriberCount).toLocaleString();
+                    document.getElementById('view-count').innerText = Number(s.viewCount).toLocaleString();
+                }
 
                 // 2. Fetch Latest 6 Videos
                 const vUrl = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=6&type=video`;
@@ -187,29 +192,39 @@
                 const container = document.getElementById('video-container');
                 container.innerHTML = ''; 
 
-                for (const item of vData.items) {
-                    const videoId = item.id.videoId;
-                    // Get likes and comments for each video
-                    const dUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${API_KEY}`;
-                    const dRes = await fetch(dUrl);
-                    const dData = await dRes.json();
-                    const vStats = dData.items[0].statistics;
+                if (vData.items) {
+                    for (const item of vData.items) {
+                        const videoId = item.id.videoId;
+                        // Get likes and comments for each video
+                        const dUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${API_KEY}`;
+                        const dRes = await fetch(dUrl);
+                        const dData = await dRes.json();
+                        
+                        let vStats = { likeCount: 0, commentCount: 0, viewCount: 0 };
+                        if (dData.items && dData.items.length > 0) {
+                            vStats = dData.items[0].statistics;
+                        }
 
-                    container.innerHTML += `
-                        <div class="video-card">
-                            <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-                            <div class="video-info">
-                                <span class="video-title">${item.snippet.title}</span>
-                                <div class="live-stats">
-                                    <span><i class="fas fa-thumbs-up"></i> ${Number(vStats.likeCount || 0).toLocaleString()}</span>
-                                    <span><i class="fas fa-comment"></i> ${Number(vStats.commentCount || 0).toLocaleString()}</span>
-                                    <span><i class="fas fa-eye"></i> ${Number(vStats.viewCount || 0).toLocaleString()}</span>
+                        container.innerHTML += `
+                            <div class="video-card">
+                                <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
+                                <div class="video-info">
+                                    <span class="video-title">${item.snippet.title}</span>
+                                    <div class="live-stats">
+                                        <span><i class="fas fa-thumbs-up"></i> ${Number(vStats.likeCount || 0).toLocaleString()}</span>
+                                        <span><i class="fas fa-comment"></i> ${Number(vStats.commentCount || 0).toLocaleString()}</span>
+                                        <span><i class="fas fa-eye"></i> ${Number(vStats.viewCount || 0).toLocaleString()}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        `;
+                    }
                 }
-            } catch (e) { console.error("Error:", e); }
+            } catch (e) { 
+                console.error("YouTube Data Error:", e);
+                document.getElementById('sub-count').innerText = "Offline";
+                document.getElementById('view-count').innerText = "Offline";
+            }
         }
         getYTData();
     </script>
